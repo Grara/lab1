@@ -1,0 +1,360 @@
+<%@ page language="java" contentType="text/html; charset=utf-8" pageEncoding="utf-8"%>
+<%@ taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<c:import url="../fragments/head-fragment.jsp"></c:import>
+<body>
+    <c:import url="../fragments/header-fragment.jsp"></c:import>
+    <c:import url="../fragments/sidemenu-fragment.jsp"></c:import>
+    <aside class="side-pc left" style="border: 4px dotted red;">
+    </aside>
+    <main id="main" style="text-align:center; border: 4px dotted green;">
+
+        <dialog id="dial">
+          <div style="width: 30%; ">
+            <span>메뉴명</span> <input type="text" id="input-name"/>
+            <span>메뉴ID</span> <input type="text" id="input-id"/>
+            <span>부모메뉴ID</span> <input type="text" id="input-parent-id" disabled/>
+            <span>URL</span> <input type="text" id="input-url"/>
+            <span>권한레벨</span> <input type="number" id="input-auth-level" style="width: 100px"/>
+            <span>정렬순서</span> <input type="number" id="input-sort-seq" style="width: 100px"/>
+            <input type="hidden" id="input-level"/>
+            <div>
+              <button onclick="saveMenu()">저장</button>
+              <button onclick="dial.close()">닫기</button>
+            </div>
+          </div>
+        </dialog>
+
+        <div class="flex-sb">
+          <div style="width: 700px" class="right">
+            <button type="button" id="lv1Add" onclick="showAddDial()">추가</button>
+          </div>
+          <div></div>
+          <div></div>
+        </div>
+        <div class="flex-sb mb20">
+          <div style="width: 700px" id="grid1"></div>
+          <div class="arrow">===></div>
+          <div style="width: 400px" id="grid2" name="authGrid"></div>
+        </div>
+        <div class="flex-sb">
+          <div style="width: 700px" class="right">
+            <button type="button" id="lv2Add" onclick="showAddDial(lastSelectLv1)" disabled>추가</button>
+          </div>
+          <div></div>
+          <div></div>
+        </div>
+        <div class="flex-sb mb20">
+          <div style="width: 700px" id="grid3"></div>
+          <div class="arrow">===></div>
+          <div style="width: 400px" id="grid4" name="authGrid"></div>
+        </div>
+        <div class="flex-sb">
+          <div style="width: 700px" class="right">
+            <button type="button" id="lv3Add" onclick="showAddDial(lastSelectLv2)" disabled>추가</button>
+          </div>
+          <div></div>
+          <div></div>
+        </div>
+        <div class="flex-sb mb20">
+          <div style="width: 700px" id="grid5"></div>
+          <div class="arrow">===></div>
+          <div style="width: 400px" id="grid6" name="authGrid"></div>
+        </div>
+    </main>
+    <aside class="side-pc right" style="border: 4px dotted purple;">
+    </aside>
+    <footer style="border: 4px dotted yellow; height:20rem">
+
+    </footer>
+<script>
+const dial = document.querySelector("#dial")
+let lastSelectLv1 = {}
+let lastSelectLv2 = {}
+let lastSelectLv3 = {}
+
+var Grid = tui.Grid;
+
+grid1 = makeMenuGrid('grid1', 'grid2', 1)
+grid3 = makeMenuGrid('grid3', 'grid4', 2)
+grid5 = makeMenuGrid('grid5', 'grid6', 3)
+
+menuSearch(grid1)
+
+grid1.on('click', function(evt){
+  if(evt.rowKey == null || evt.rowKey == undefined) return
+  const row = evt.instance.dataManager.getOriginData()[evt.rowKey]
+  lastSelectLv1 = row
+  grid3.authGrid.clear()
+  grid5.authGrid.clear()
+  grid5.clear()
+  $('#lv2Add').prop('disabled', false)
+  $('#lv3Add').prop('disabled', true)
+  menuSearch(grid3, row.MENU_ID)
+})
+
+grid3.on('click', function(evt){
+  if(evt.rowKey == null || evt.rowKey == undefined) return
+  const row = evt.instance.dataManager.getOriginData()[evt.rowKey]
+  lastSelectLv2 = row
+  grid5.authGrid.clear()
+  $('#lv3Add').prop('disabled', false)
+  menuSearch(grid5, row.MENU_ID)
+})
+
+grid5.on('click', function(evt){
+  if(evt.rowKey == null || evt.rowKey == undefined) return
+  const row = evt.instance.dataManager.getOriginData()[evt.rowKey]
+  lastSelectLv3 = row
+})
+
+grid1.on('dblclick', function(evt){
+  showModiDial(lastSelectLv1)
+})
+
+grid3.on('dblclick', function(evt){
+  showModiDial(lastSelectLv2)
+})
+
+grid5.on('dblclick', function(evt){
+  showModiDial(lastSelectLv3)
+})
+
+$('[name=authGrid]').on('change', ' input',function(){
+  const toggleType = $(this).prop('checked') ? 'on' : 'off'
+  toggleAuth($(this).attr('data-menuId'), $(this).attr('data-authName'), toggleType)
+})
+
+function makeMenuGrid(divId, authDivId,level){
+  const menuGrid = new tui.Grid({
+    el: document.getElementById(divId),
+    data: [],
+    scrollX: false,
+    scrollY: true,
+    selectionUnit: 'row',
+    bodyHeight: 200,
+    columns: [
+      {
+        header: '메뉴ID',
+        name: 'MENU_ID',
+        width: 100,
+      },
+      {
+        header: '메뉴명',
+        name: 'NAME',
+        width: 200,
+      },
+      {
+        header: 'URL',
+        name: 'URL',
+        width: 200,
+      },
+      {
+        header: '정렬순서',
+        name: 'SORT_SEQ',
+        width: 100,
+      },
+      {
+        header: '권한레벨',
+        name: 'AUTH_LEVEL',
+        width: 100,
+      }
+    ]
+  });
+
+  const authGrid = makeAuthGrid(authDivId)
+
+  menuGrid.on('click', function(evt){
+    if(evt.rowKey == null || evt.rowKey == undefined) return
+    const row = evt.instance.dataManager.getOriginData()[evt.rowKey]
+    fetch('/system/menu/auth?MENU_ID=' + row.MENU_ID,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json"
+        },
+      }
+    ).then(function(res){
+      return res.json()
+    })
+    .then(data => {
+      for(let i = 0; i < data.length; i++){
+        data[i].MENU_ID = row.MENU_ID
+      }
+      authGrid.resetData(data)
+    })
+    .catch((error) => console.log("권한 조회 실패"))
+  })
+
+  menuGrid.authGrid = authGrid
+  return menuGrid
+}
+
+function makeAuthGrid(divId){
+  const result = new tui.Grid({
+    el: document.getElementById(divId),
+    data: [],
+    scrollX: false,
+    scrollY: true,
+    //rowHeaders: ['checkbox'],
+    bodyHeight: 200,
+    columns: [
+      {
+        header: '접근허용',
+        name: 'AUTH_YES',
+        width: 100,
+        align: 'center',
+        formatter: function(prop){
+          if(prop.value){
+            return `<input type="checkbox"
+                     data-authName="\${prop.row.AUTH_NAME}"
+                     data-menuId="\${prop.row.MENU_ID}"
+                    checked>`
+          } else {
+            return `<input type="checkbox"
+                    data-authName="\${prop.row.AUTH_NAME}"
+                    data-menuId="\${prop.row.MENU_ID}"
+                    >`
+          }
+        }
+      },
+      {
+        header: '권한명',
+        name: 'AUTH_NAME',
+        width: 200,
+      },
+      {
+        header: '권한레벨',
+        name: 'AUTH_LEVEL',
+        width: 100,
+      },
+    ]
+  })
+  return result
+}
+
+function menuSearch(grid, parentId){
+  const qString = !!parentId ? '?PARENT_ID=' + parentId : ''
+  fetch('/system/menu/search' + qString,
+    {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json"
+      },
+    }
+  ).then(function(res){
+    return res.json()
+  })
+  .then(data => {
+    grid.resetData(data)
+  })
+  .catch((error) => console.log("메뉴 조회 실패"))
+}
+
+function saveMenu(){
+  const param = {
+    NAME: $('#input-name').val(),
+    MENU_ID: $('#input-id').val(),
+    PARENT_ID: $('#input-parent-id').val() || null,
+    URL: $('#input-url').val(),
+    SORT_SEQ: $('#input-sort-seq').val() || 9999,
+    AUTH_LEVEL: $('#input-auth-level').val() || 100,
+    LEVEL: $('#input-level').val()
+  }
+
+  fetch('/system/menu/save',
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(param),
+    }
+  ).then(function(res){
+    if(res.status == 200) {
+      alert('저장에 성공했습니다')
+      dial.close()
+      if(param.LEVEL == 1){
+        grid1.authGrid.clear()
+        grid3.authGrid.clear()
+        grid3.clear()
+        grid5.authGrid.clear()
+        grid5.clear()
+        menuSearch(grid1)
+      } else if(param.LEVEL == 2){
+        grid3.authGrid.clear()
+        grid5.authGrid.clear()
+        grid5.clear()
+        menuSearch(grid3, lastSelectLv1.MENU_ID)
+      } else {
+        grid5.authGrid.clear()
+        menuSearch(grid5, lastSelectLv2.MENU_ID)
+      }
+    } else {
+      throw new Error('메뉴 저장 실패')
+    }
+  })
+  .catch((error) => console.log(error))
+
+}
+
+function toggleAuth(menuId, authName, toggleType){
+  const param = {
+    MENU_ID: menuId,
+    AUTH_NAME: authName,
+    toggleType
+  }
+
+  fetch('/system/menu/auth/save',
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify(param),
+    }
+  ).then(function(res){
+    if(res.status == 200) {
+      console.log("권한 저장 성공")
+    } else {
+      throw new Error('권한 저장 실패')
+    }
+  })
+  .catch((error) => console.log(error))
+}
+
+function showAddDial(parentMenu) {
+
+  if(parentMenu){
+    $('#input-id').prop('disabled', true)
+  } else {
+    $('#input-id').prop('disabled', false)
+  }
+
+  const parentId = !!parentMenu ? parentMenu.MENU_ID : ''
+  const level = !!parentMenu ? parentMenu.LEVEL + 1 : 1
+
+  $('#input-id').val('')
+  $('#input-parent-id').val(parentId)
+  $('#input-url').val('')
+  $('#input-name').val('')
+  $('#input-sort-seq').val('')
+  $('#input-auth-level').val('')
+  $('#input-level').val(level)
+  dial.showModal()
+}
+
+function showModiDial(selectMenu) {
+  const {MENU_ID, LEVEL, SORT_SEQ, NAME, PARENT_ID, URL, AUTH_LEVEL} = selectMenu
+
+  $('#input-id').prop('disabled', true)
+  $('#input-id').val(MENU_ID)
+  $('#input-parent-id').val(PARENT_ID || '')
+  $('#input-url').val(URL)
+  $('#input-name').val(NAME)
+  $('#input-sort-seq').val(SORT_SEQ)
+  $('#input-auth-level').val(AUTH_LEVEL)
+  $('#input-level').val(LEVEL)
+  dial.showModal()
+}
+</script>
+</body>

@@ -1,0 +1,12 @@
+.tui-grid-cell-current-row td{
+  background-color: #f3ffe3;
+}
+.tui-grid-header-area{
+  pointer-events : none;
+}
+.tui-grid-layer-selection, tui-grid-cell-selected {
+  display: none
+}
+.tui-grid-cell-header.tui-grid-cell-selected {
+  background-color: #fff
+}

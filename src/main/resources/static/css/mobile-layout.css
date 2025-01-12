@@ -1,0 +1,86 @@
+@media (max-width: 768px) {
+  body {
+    width: 100vw;
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 30vw 40vw 30vw;
+    grid-template-rows: 30vh 40vh 30vh;
+  }
+
+  .main-nav {
+    display: none;
+  }
+
+  .side-pc {
+    display: none;
+  }
+
+  main {
+    grid-column: 1 / 4;
+  }
+
+  .side-nav-btn {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 4rem;
+    height: 3rem;
+    background: transparent;
+    border: none;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    margin-right: 2rem;
+    cursor: pointer;
+    text-align: center;
+  }
+
+  .side-nav-btn span {
+    display: block;
+    width: 2rem;
+    height: 2.5px;
+    background: green;
+  }
+
+  .side-nav-div.on {
+    display: block!important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 60vw;
+    height: 100%;
+  }
+
+  .backdrop.on{
+    display: block;
+    position: absolute;
+    top:0;
+    left:0;
+    width: 100%;
+    height: 100%;
+    background-color: black;
+    opacity: 0.5;
+  }
+}
+
+.side-nav-bg {
+  width: 100%;
+  height: 100%;
+  background-color: white;
+}
+
+.side-nav a {
+  color: black;
+}
+
+details {
+  margin-bottom: 0;
+}
+
+details ul {
+  padding-left: 1rem;
+}
+
+.side-nav-div li:has(> a) {
+  padding-left: 1.9rem;
+}

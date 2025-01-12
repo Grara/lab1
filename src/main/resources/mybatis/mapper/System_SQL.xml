@@ -1,0 +1,279 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.lab1.SystemMapper">
+    <select id="getAllMenu" resultMap="MenuResultMap">
+
+        WITH BASIC AS (
+            SELECT MENU.*
+              FROM MENU
+              JOIN MENU_AUTH ON MENU.MENU_ID = MENU_AUTH.MENU_ID
+             WHERE AUTH_LEVEL <![CDATA[<=]]> (SELECT AUTH_LEVEL FROM AUTH WHERE AUTH_NAME = #{AUTH_NAME})
+                OR AUTH_NAME = #{AUTH_NAME}
+        )
+
+        SELECT M1.MENU_ID
+             , M1.NAME
+             , M1.LEVEL
+             , M1.URL
+             , M1.SORT_SEQ
+
+             , M2.MENU_ID   AS m2_menu_id
+             , M2.NAME      AS m2_name
+             , M2.LEVEL     AS m2_level
+             , M2.URL       AS m2_url
+             , M2.SORT_SEQ  AS m2_sort_seq
+
+             , M3.MENU_ID   AS m3_menu_id
+             , M3.NAME      AS m3_name
+             , M3.LEVEL     AS m3_level
+             , M3.URL       AS m3_url
+             , M3.SORT_SEQ  AS m3_sort_seq
+
+          FROM BASIC M1
+
+     LEFT JOIN BASIC M2
+            ON M1.MENU_ID = M2.PARENT_ID
+     LEFT JOIN BASIC M3
+            ON M2.MENU_ID = M3.PARENT_ID
+
+         WHERE M1.level = 1
+      ORDER BY M1.SORT_SEQ, m2_sort_seq, m3_sort_seq
+    </select>
+
+    <resultMap id="MenuResultMap" type="com.lab1.Menu">
+        <id column="MENU_ID" property="id" />
+        <result column="NAME" property="name"/>
+        <result column="LEVEL" property="level"/>
+        <result column="URL" property="url"/>
+        <result column="SORT_SEQ" property="sortSeq"/>
+        <collection property="children" ofType="com.lab1.Menu">
+            <id column="m2_menu_id" property="id" />
+            <result column="m2_name" property="name"/>
+            <result column="m2_level" property="level"/>
+            <result column="m2_url" property="url"/>
+            <result column="m2_sort_seq" property="sortSeq"/>
+            <collection property="children" ofType="com.lab1.Menu">
+                <id column="m3_menu_id" property="id" />
+                <result column="m3_name" property="name"/>
+                <result column="m3_level" property="level"/>
+                <result column="m3_url" property="url"/>
+                <result column="m3_sort_seq" property="sortSeq"/>
+            </collection>
+        </collection>
+    </resultMap>
+
+    <select id="getMenuListByParent" resultType="Map">
+        SELECT M.*
+             , AUTH_LEVEL
+          FROM MENU M
+     LEFT JOIN MENU_AUTH A
+            ON M.MENU_ID = A.MENU_ID
+           AND A.AUTH_LEVEL IS NOT NULL
+        <if test='PARENT_ID != null'>
+         WHERE M.PARENT_ID = #{PARENT_ID}
+        </if>
+        <if test='PARENT_ID == null'>
+         WHERE M.PARENT_ID IS NULL
+        </if>
+        ORDER BY SORT_SEQ
+    </select>
+
+    <select id="getAuthOfMenu" resultType="Map">
+        SELECT A.*
+             , M.AUTH_NAME AS AUTH_YES
+          FROM AUTH A
+     LEFT JOIN MENU_AUTH M
+            ON A.AUTH_NAME = M.AUTH_NAME
+           AND M.MENU_ID = #{MENU_ID}
+    </select>
+
+    <update id="saveMenu" parameterType="Map">
+        <selectKey resultType="String" keyProperty="MENU_ID" order="BEFORE">
+            SELECT CASE WHEN #{MENU_ID} = ''
+                THEN (SELECT CONCAT(#{PARENT_ID} , '-' , (ISNULL(MAX(CAST( REPLACE(MENU_ID, PARENT_ID + '-', '') AS INTEGER)), 0) + 1))
+                FROM MENU
+                WHERE PARENT_ID = #{PARENT_ID}
+                )
+                ELSE #{MENU_ID}
+                END
+        </selectKey>
+        MERGE INTO MENU
+        USING (SELECT #{MENU_ID} AS MENU_ID) REQ
+           ON MENU.MENU_ID = REQ.MENU_ID
+         WHEN NOT MATCHED THEN
+       INSERT (MENU_ID, NAME, LEVEL, PARENT_ID, SORT_SEQ, URL)
+       VALUES (#{MENU_ID}, #{NAME}, #{LEVEL}, #{PARENT_ID}, #{SORT_SEQ}, #{URL})
+         WHEN MATCHED THEN
+       UPDATE SET
+              NAME = #{NAME}
+            , SORT_SEQ = #{SORT_SEQ}
+            , URL = #{URL} ;
+    </update>
+
+    <update id="saveMenuAuthLevel" parameterType="Map">
+        MERGE INTO MENU_AUTH
+        USING (SELECT #{MENU_ID} AS MENU_ID
+                    , '' AS AUTH_NAME) REQ
+           ON MENU_AUTH.MENU_ID = REQ.MENU_ID
+          AND MENU_AUTH.AUTH_NAME = REQ.AUTH_NAME
+         WHEN NOT MATCHED THEN
+       INSERT (MENU_ID, AUTH_NAME, AUTH_LEVEL)
+       VALUES (#{MENU_ID}, '', #{AUTH_LEVEL})
+         WHEN MATCHED THEN
+       UPDATE SET
+              AUTH_LEVEL = #{AUTH_LEVEL} ;
+    </update>
+
+    <update id="toggleMenuAuth" parameterType="Map">
+        <if test='toggleType == "on"'>
+       INSERT INTO MENU_AUTH
+                (MENU_ID, AUTH_NAME)
+            VALUES
+                (#{MENU_ID}, #{AUTH_NAME})
+        </if>
+        <if test='toggleType == "off"'>
+        DELETE FROM MENU_AUTH
+         WHERE MENU_ID = #{MENU_ID}
+           AND AUTH_NAME = #{AUTH_NAME}
+        </if>
+    </update>
+
+    <select id="searchProgram" resultType="Map">
+        SELECT *
+          FROM PROGRAM
+         WHERE PGR_NAME LIKE '%' + ISNULL(#{PGR_NAME},'') + '%'
+           AND DEVICE = #{DEVICE}
+    </select>
+
+    <select id="searchAction" resultType="Map">
+        SELECT A.*
+             , P.PGR_NAME
+             , AUTH.AUTH_LEVEL
+          FROM ACTION A
+          JOIN PROGRAM P
+            ON A.PGR_ID = P.PGR_ID
+     LEFT JOIN ACTION_AUTH AUTH
+            ON A.ACTION_ID = AUTH.ACTION_ID
+           AND AUTH.AUTH_LEVEL IS NOT NULL
+         WHERE A.PGR_ID = #{PGR_ID}
+    </select>
+
+    <select id="getActionAuth" resultType="Map">
+        SELECT A.*
+             , B.AUTH_NAME AS AUTH_YES
+          FROM AUTH A
+     LEFT JOIN ACTION_AUTH B
+            ON A.AUTH_NAME = B.AUTH_NAME
+           AND B.ACTION_ID = #{ACTION_ID}
+    </select>
+
+    <update id="saveProgram" parameterType="Map">
+        <selectKey resultType="Integer" keyProperty="REG_SEQ" order="BEFORE">
+        SELECT ISNULL(MAX(REG_SEQ), 0) + 1
+          FROM PROGRAM
+        </selectKey>
+
+        <if test='saveType == "insert"'>
+        INSERT INTO PROGRAM
+            (PGR_ID, REG_SEQ, PGR_NAME, DEVICE, CRT_DTM)
+        VALUES
+            (
+              CONCAT('PGR', #{REG_SEQ})
+            , #{REG_SEQ}
+            , #{PGR_NAME}
+            , #{DEVICE}
+            , GETDATE()
+            )
+        </if>
+        <if test='saveType == "update"'>
+        UPDATE PROGRAM
+           SET PGR_NAME = #{PGR_NAME}
+             , DEVICE = #{DEVICE}
+             , LAST_CHG_DTM = GETDATE()
+         WHERE PGR_ID = #{PGR_ID}
+        </if>
+
+    </update>
+
+    <update id="saveAction" parameterType="Map">
+        <selectKey resultType="Integer" keyProperty="REG_SEQ" order="BEFORE">
+            SELECT ISNULL(MAX(REG_SEQ), 0) + 1
+            FROM ACTION
+        </selectKey>
+        <if test='saveType == "insert"'>
+            INSERT INTO ACTION
+                (ACTION_ID, URL, REG_SEQ, PGR_ID, DESCRIPTION, CRT_DTM)
+            VALUES
+                (
+                  CONCAT('ACT', #{REG_SEQ})
+                , #{URL}
+                , #{REG_SEQ}
+                , #{PGR_ID}
+                , #{DESCRIPTION}
+                , GETDATE()
+                )
+        </if>
+        <if test='saveType == "update"'>
+            UPDATE ACTION
+               SET DESCRIPTION = #{DESCRIPTION}
+                 , LAST_CHG_DTM = GETDATE()
+                 , URL = #{URL}
+             WHERE ACTION_ID = #{ACTION_ID}
+        </if>
+    </update>
+
+    <update id="saveActionAuthLevel" parameterType="Map">
+        MERGE INTO ACTION_AUTH
+        USING (SELECT #{ACTION_ID} AS ACTION_ID
+                    , '' AS AUTH_NAME) REQ
+           ON ACTION_AUTH.ACTION_ID = REQ.ACTION_ID
+          AND ACTION_AUTH.AUTH_NAME = REQ.AUTH_NAME
+         WHEN NOT MATCHED THEN
+       INSERT (ACTION_ID, AUTH_NAME, AUTH_LEVEL)
+       VALUES (#{ACTION_ID}, '', #{AUTH_LEVEL})
+         WHEN MATCHED THEN
+       UPDATE SET
+              AUTH_LEVEL = #{AUTH_LEVEL} ;
+    </update>
+
+    <update id="toggleActionAuth" parameterType="Map">
+        <if test='toggleType == "on"'>
+            INSERT INTO ACTION_AUTH
+                (ACTION_ID, AUTH_NAME)
+            VALUES
+                (#{ACTION_ID}, #{AUTH_NAME})
+        </if>
+        <if test='toggleType == "off"'>
+            DELETE FROM ACTION_AUTH
+            WHERE ACTION_ID = #{ACTION_ID}
+              AND AUTH_NAME = #{AUTH_NAME}
+        </if>
+    </update>
+
+    <insert id="testQ" parameterType="Object">
+
+        <foreach collection="list" item="item" separator=" ">
+            INSERT INTO TEST1 (COL1) VALUES
+            (#{item})
+        </foreach>
+    </insert>
+
+    <select id="getPermittedUrl" resultType="Map">
+        SELECT ACTION.*
+          FROM ACTION
+          JOIN ACTION_AUTH ON ACTION.ACTION_ID = ACTION_AUTH.ACTION_ID
+         WHERE AUTH_LEVEL <![CDATA[<=]]> (SELECT AUTH_LEVEL FROM AUTH WHERE AUTH_NAME = #{AUTH_NAME})
+            OR AUTH_NAME = #{AUTH_NAME}
+    </select>
+
+    <insert id="csvTest">
+        INSERT INTO TEST2 (COL1, COL2, COL3) VALUES
+        <foreach collection="list" item="item" separator=",">
+            (#{item.COL1}, #{item.COL2}, #{item.COL3})
+        </foreach>
+    </insert>
+</mapper>
