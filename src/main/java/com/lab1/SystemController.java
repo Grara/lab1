@@ -22,7 +22,7 @@ public class SystemController {
 
     @GetMapping("/system/menu")
     public String menuPage(Model model){
-        ss.testQQ();
+        //ss.testQQ();
 
         return "pages/menuManage";
     }

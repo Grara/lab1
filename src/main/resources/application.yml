@@ -1,8 +1,17 @@
 spring:
+  threads:
+    virtual:
+      enabled: true
+  devtools:
+    livereload:
+      enabled: true
+    remote:
+      restart:
+        enabled: false
   application:
     name: lab1
   datasource:
-    url: jdbc:log4jdbc:sqlserver://localhost:1433;databaseName=GIBON;encrypt=false;trustServerCertificate=true
+    url: jdbc:log4jdbc:sqlserver://host.docker.internal:1433;databaseName=GIBON;encrypt=false;trustServerCertificate=true
     username: admin
     password: 1234
     driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
@@ -30,3 +39,17 @@ log4j:
       mybatis:
         example: DEBUG
 fileDir: C:/test/
+
+#server:
+#  ssl:
+#    key-store: keystore.p12
+#    key-store-type: PKCS12
+#    key-store-password: no5685689
+#  http2:
+#    enabled: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"

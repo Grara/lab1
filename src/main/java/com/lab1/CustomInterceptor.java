@@ -19,6 +19,7 @@ public class CustomInterceptor implements HandlerInterceptor {
     public boolean preHandle(HttpServletRequest req, HttpServletResponse response, Object handler) throws Exception {
         log.debug("Request URI ===> " + req.getRequestURI());
         HttpSession session = req.getSession();
+        if(req.getRequestURI().equals("/error")) return true;
         Map<String, Object> sessionMap = (Map)session.getAttribute("userSession");
         if(sessionMap == null){
             response.sendRedirect("/login");
@@ -35,7 +36,6 @@ public class CustomInterceptor implements HandlerInterceptor {
 
         log.debug("허가되지않은 URL입니다");
         response.sendRedirect("/");
-
         return false;
     }
 

@@ -1,6 +1,7 @@
 package com.lab1;
 
 import org.apache.ibatis.annotations.Mapper;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -9,6 +10,7 @@ import java.util.Map;
 
 @Mapper
 public interface SystemMapper {
+
     List<Menu> getAllMenu(String authName);
 
     List<Map<String, Object>> getMenuListByParent(Map<String, Object> param);

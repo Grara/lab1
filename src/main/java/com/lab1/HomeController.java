@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -14,12 +15,16 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Controller
+@Slf4j
 public class HomeController {
 
     private ObjectMapper mapper = new ObjectMapper();
 
     @Autowired
     private SystemMapper systemMapper;
+
+    @Autowired
+    private SystemService systemService;
 
     @Autowired
     private MemberMapper memberMapper;
@@ -29,7 +34,7 @@ public class HomeController {
 
     @GetMapping("/")
     public String home(Model model) throws Exception{
-        fileService.readCsv("testcsv.csv");
+        log.debug(Boolean.toString(Thread.currentThread().isVirtual()));
         return "pages/index-page";
     }
 
@@ -68,5 +73,15 @@ public class HomeController {
                                 HttpServletRequest req) throws Exception {
 
         return "success";
+    }
+
+    @ResponseBody
+    @RequestMapping("/test")
+    public String test(){
+        for(int i = 0; i < 1000; i++) {
+            systemService.getAllMenu();
+        }
+
+        return "dd";
     }
 }
