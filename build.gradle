@@ -35,10 +35,11 @@ dependencies {
 	implementation 'org.springframework.boot:spring-boot-starter-web'
 	implementation 'org.springframework.boot:spring-boot-starter-cache'
 	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
 	implementation 'com.github.ben-manes.caffeine:caffeine'
-	implementation 'jakarta.servlet.jsp.jstl:jakarta.servlet.jsp.jstl-api'
-	implementation 'org.glassfish.web:jakarta.servlet.jsp.jstl'
-	implementation "org.apache.tomcat.embed:tomcat-embed-jasper"
+	//implementation 'jakarta.servlet.jsp.jstl:jakarta.servlet.jsp.jstl-api'
+	//implementation 'org.glassfish.web:jakarta.servlet.jsp.jstl'
+	//implementation "org.apache.tomcat.embed:tomcat-embed-jasper"
 	//implementation 'org.xerial:sqlite-jdbc'
 	//implementation 'org.postgresql:postgresql:42.7.3'
 	implementation 'com.microsoft.sqlserver:mssql-jdbc:12.8.1.jre11'

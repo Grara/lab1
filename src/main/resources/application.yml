@@ -1,4 +1,7 @@
 spring:
+  thymeleaf:
+    prefix: classpath:templates/
+    suffix: .html
   threads:
     virtual:
       enabled: true
@@ -11,15 +14,15 @@ spring:
   application:
     name: lab1
   datasource:
-    url: jdbc:log4jdbc:sqlserver://host.docker.internal:1433;databaseName=GIBON;encrypt=false;trustServerCertificate=true
+    url: jdbc:log4jdbc:sqlserver://localhost:1433;databaseName=GIBON;encrypt=false;trustServerCertificate=true
     username: admin
     password: 1234
     driver-class-name: net.sf.log4jdbc.sql.jdbcapi.DriverSpy
-  mvc:
-    view:
-      suffix: .jsp
-      prefix: /WEB-INF/views/
-    static-path-pattern: /resources/**
+#  mvc:
+#    view:
+#      suffix: .jsp
+#      prefix: /WEB-INF/views/
+#    static-path-pattern: /resources/**
   jpa:
     #database-platform: postgresql
     database: sqlserver

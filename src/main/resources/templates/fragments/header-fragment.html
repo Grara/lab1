@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<header th:fragment="header" style="text-align:center; border: 4px dotted blue;">
+  <a class="contrast" href="/">This is just lab</a>
+  <nav class="main-nav" style="padding-inline: 100px">
+    <ul style="align-items: baseline" th:if="${session.userSession?.menu != null}">
+      <li class="menu-lv1 contrast" th:each="m1 : ${session.userSession.menu}">[[${m1.name}]]
+        <div class="menu-dropdown" th:if="${m1.children.size() > 0}">
+          <ul>
+            <li th:each="m2 : ${m1.children}">
+              <a th:if="${m2.children.size() == 0}" th:href="${m2.url}">[[${m2.name}]]</a>
+              <details th:unless="${m2.children.size() == 0}">
+                <summary>[[${m2.name}]]</summary>
+                <ul>
+                  <li th:each="${m3 : ${m2.children}}"><a th:href="${m3.url}">[[${m3.name}]]</a></li>
+                </ul>
+              </details>
+            </li>
+          </ul>
+        </div>
+      </li>
+    </ul>
+  </nav>
+</header>
+
+</html>

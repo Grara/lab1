@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<th:block th:fragment="sidemenu">
+  <button class="side-nav-btn" style="z-index:10">
+    <span></span>
+    <span></span>
+    <span></span>
+  </button>
+  <div class="side-nav-div" style="z-index:9">
+    <aside class="side-nav-bg">
+      <nav class="side-nav">
+        <div style="position: absolute; top:20%; left:20%">
+          <ul>
+            <li>
+              <details>
+                <summary>About</summary>
+                <ul>
+                  <li>
+                    <details>
+                      <summary>About</summary>
+                      <ul>
+                        <li><a hx-get="/about-main" hx-target="#main" hx-push-url="/about" class="contrast">about</a>
+                        </li>
+                      </ul>
+                    </details>
+                  </li>
+                  <li><a hx-get="/about-main" hx-target="#main" hx-push-url="/about" class="contrast">about</a></li>
+                </ul>
+              </details>
+            </li>
+            <li><a hx-get="/services-main" hx-target="#main" hx-push-url="/services" class="contrast">Services</a></li>
+            <li><a hx-get="/products-main" hx-target="#main" hx-push-url="/products" class="contrast">Products</a></li>
+          </ul>
+        </div>
+      </nav>
+    </aside>
+  </div>
+  <div class="backdrop"></div>
+  <script>
+    $('.side-nav-btn').on('click', function(){
+        $('.side-nav-div').toggleClass('on')
+        $('.backdrop').toggleClass('on')
+    })
+
+    $('.backdrop').on('click', function(){
+        $('.side-nav-div').toggleClass('on')
+        $('.backdrop').toggleClass('on')
+    })
+
+    $('.side-nav').on('click', ' a', function(){
+        $('.side-nav-div').toggleClass('on')
+        $('.backdrop').toggleClass('on')
+    })
+  </script>
+</th:block>
+
+</html>

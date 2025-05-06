@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<template th:replace="~{/fragments/head-fragment :: head}"></template>
+<body>
+<template th:replace="~{/fragments/header-fragment :: header}"></template>
+<template th:replace="~{/fragments/sidemenu-fragment :: sidemenu}"></template>
+<aside class="side-pc left" style="border: 4px dotted red;">
+</aside>
+<main id="main" style="text-align:center; border: 4px dotted green;">
+  <dialog id="dial1">
+    <div style="width: 30%; ">
+      <span>프로그램명</span> <input type="text" id="pgrName"/>
+      <span>디바이스</span>
+      <span>
+        <label>
+          <input type="radio" name="dialDevice" value="PC" checked/>
+          PC
+        </label>
+        <label>
+          <input type="radio" name="dialDevice" value="MOBILE"/>
+          모바일
+        </label>
+      </span>
+      <input type="hidden" id="pgrId"/>
+      <input type="hidden" id="pgrSaveType"/>
+      <div>
+        <button onclick="saveProgram()">저장</button>
+        <button onclick="dial1.close()">닫기</button>
+      </div>
+    </div>
+  </dialog>
+
+  <dialog id="dial2">
+    <div style="width: 30%; ">
+      <span>URL</span> <input type="text" id="actionUrl"/>
+      <span>프로그램명</span> <input type="text" id="actionPgrName" disabled/>
+      <span>설명</span> <input type="text" id="actionDesc"/>
+      <span>권한레벨</span> <input type="number" id="actionAuthLv" style="width: 100px"/>
+      <input type="hidden" id="actionPgrId"/>
+      <input type="hidden" id="actionSaveType"/>
+      <input type="hidden" id="actionId"/>
+      <div>
+        <button onclick="saveAction()">저장</button>
+        <button onclick="dial2.close()">닫기</button>
+      </div>
+    </div>
+  </dialog>
+
+  <table class="w700">
+    <tr>
+      <td>
+        <input type="text" id="srchTxt" placeholder="프로그램명 입력" style="width: 400px"/>
+        <button type="button" id="srchBtn">검색</button>
+        <label>
+          <input type="radio" name="device" value="PC" checked/>
+          PC
+        </label>
+        <label>
+          <input type="radio" name="device" value="MOBILE"/>
+          모바일
+        </label>
+      </td>
+    </tr>
+  </table>
+  <div class="flex-sb">
+    <div style="width: 700px" class="right">
+      <button type="button" id="programAdd" onclick="showProgramDial()">추가</button>
+    </div>
+    <div></div>
+  </div>
+  <div class="flex-sb mb20">
+    <div style="width: 700px" id="grid1"></div>
+  </div>
+  <div class="flex-sb">
+    <div style="width: 700px" class="right">
+      <button type="button" id="actionAdd" onclick="showActionDial()" disabled>추가</button>
+    </div>
+    <div></div>
+    <div></div>
+  </div>
+  <div class="flex-sb mb20">
+    <div style="width: 700px" id="grid2"></div>
+    <div class="arrow">===></div>
+    <div style="width: 400px" id="grid3" name="authGrid"></div>
+  </div>
+</main>
+<aside class="side-pc right" style="border: 4px dotted purple;">
+</aside>
+<footer style="border: 4px dotted yellow; height:20rem">
+
+</footer>
+<script>
+  const dial1 = document.querySelector("#dial1")
+  const dial2 = document.querySelector("#dial2")
+
+  const grid1 = new tui.Grid({
+    el: document.getElementById('grid1'),
+    data: [],
+    scrollX: false,
+    scrollY: true,
+    selectionUnit: 'row',
+    bodyHeight: 200,
+    columns: [
+      {
+        header: '프로그램ID',
+        name: 'PGR_ID',
+        width: 100,
+      },
+      {
+        header: '프로그램명',
+        name: 'PGR_NAME',
+        width: 500,
+      },
+      {
+        header: '디바이스',
+        name: 'DEVICE',
+        width: 100,
+      },
+    ]
+  })
+
+  const grid2 = new tui.Grid({
+    el: document.getElementById('grid2'),
+    data: [],
+    scrollX: false,
+    scrollY: true,
+    selectionUnit: 'row',
+    bodyHeight: 200,
+    columns: [
+      {
+        header: '액션ID',
+        name: 'ACTION_ID',
+        width: 100,
+      },
+      {
+        header: 'URL',
+        name: 'URL',
+        width: 200,
+      },
+      {
+        header: '프로그램명',
+        name: 'PGR_NAME',
+        width: 100,
+      },
+      {
+        header: '설명',
+        name: 'DESCRIPTION',
+        width: 200,
+      },
+      {
+        header: '권한레벨',
+        name: 'AUTH_LEVEL',
+        width: 100,
+      },
+    ]
+  })
+
+  const grid3 = new tui.Grid({
+    el: document.getElementById('grid3'),
+    data: [],
+    scrollX: false,
+    scrollY: true,
+    //rowHeaders: ['checkbox'],
+    bodyHeight: 200,
+    columns: [
+      {
+        header: '접근허용',
+        name: 'AUTH_YES',
+        width: 100,
+        align: 'center',
+        formatter: function(prop){
+          if(prop.value){
+            return `<input type="checkbox"
+                     data-authName="${prop.row.AUTH_NAME}"
+                     data-actionId="${prop.row.ACTION_ID}"
+                    checked>`
+          } else {
+            return `<input type="checkbox"
+                    data-authName="${prop.row.AUTH_NAME}"
+                    data-actionId="${prop.row.ACTION_ID}"
+                    >`
+          }
+        }
+      },
+      {
+        header: '권한명',
+        name: 'AUTH_NAME',
+        width: 200,
+      },
+      {
+        header: '권한레벨',
+        name: 'AUTH_LEVEL',
+        width: 100,
+      },
+    ]
+  })
+
+  $('#srchTxt').on('keyup', function(evt){
+    if(evt.keyCode == 13) {
+      searchProgram()
+    }
+  })
+
+  $('#srchBtn').on('click', function(){
+    searchProgram()
+  })
+
+  $('[name=device]').on('change', function(){
+    searchProgram()
+  })
+
+  grid1.on('click', function(evt){
+    if(evt.rowKey == null || evt.rowKey == undefined) return
+    const row = evt.instance.dataManager.getOriginData()[evt.rowKey]
+    $('#actionPgrName').val(row.PGR_NAME)
+    $('#actionPgrId').val(row.PGR_ID)
+    $('#actionAdd').prop('disabled', false)
+    searchAction(row.PGR_ID)
+  })
+
+  grid1.on('dblclick', function(evt){
+    if(evt.rowKey == null || evt.rowKey == undefined) return
+    const row = evt.instance.dataManager.getOriginData()[evt.rowKey]
+    showProgramDial(row)
+  })
+
+  grid2.on('click', function(evt){
+    if(evt.rowKey == null || evt.rowKey == undefined) return
+    const row = evt.instance.dataManager.getOriginData()[evt.rowKey]
+    getActionAuth(row.ACTION_ID)
+  })
+
+  grid2.on('dblclick', function(evt){
+    if(evt.rowKey == null || evt.rowKey == undefined) return
+    const row = evt.instance.dataManager.getOriginData()[evt.rowKey]
+    showActionDial(row)
+  })
+
+  $('#grid3').on('change', ' input',function(){
+    const toggleType = $(this).prop('checked') ? 'on' : 'off'
+    toggleAuth($(this).attr('data-actionId'), $(this).attr('data-authName'), toggleType)
+  })
+
+  searchProgram()
+
+  function searchProgram(){
+    $('#actionAdd').prop('disabled', true)
+
+    const param = {
+      PGR_NAME: $('#srchTxt').val(),
+      DEVICE: $('[name=device]:checked').val()
+    }
+
+    const qString = $.param(param)
+    const url = '/system/program/search?'+ qString
+    console.log(url)
+
+    fetch( url,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json"
+        },
+      }
+    ).then(function(res){
+      return res.json()
+    })
+    .then(data => {
+      grid2.clear()
+      grid3.clear()
+      grid1.resetData(data)
+    })
+    .catch((error) => console.log("프로그램 조회 실패"))
+  }
+
+  function searchAction(PGR_ID) {
+    const param = {
+      PGR_ID
+    }
+
+    const qString = $.param(param)
+    const url = '/system/action/search?'+ qString
+    console.log(url)
+
+    fetch( url,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json"
+        },
+      }
+    ).then(function(res){
+      return res.json()
+    })
+    .then(data => {
+      grid3.clear()
+      grid2.resetData(data)
+    })
+    .catch((error) => console.log("액션 조회 실패"))
+  }
+
+  function getActionAuth(ACTION_ID) {
+    const param = {
+      ACTION_ID
+    }
+
+    const qString = $.param(param)
+    const url = '/system/action/auth?'+ qString
+    console.log(url)
+
+    fetch( url,
+      {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json"
+        },
+      }
+    ).then(function(res){
+      return res.json()
+    })
+    .then(data => {
+      for(let i = 0; i < data.length; i++){
+        data[i].ACTION_ID = ACTION_ID
+      }
+      grid3.resetData(data)
+    })
+    .catch((error) => console.log("액션 조회 실패"))
+  }
+
+  function saveProgram(){
+    const param = {
+      PGR_ID: $('#pgrId').val(),
+      PGR_NAME: $('#pgrName').val(),
+      DEVICE: $('[name=dialDevice]:checked').val(),
+      saveType: $('#pgrSaveType').val(),
+    }
+
+    console.log(param)
+
+    fetch('/system/program/save',
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(param),
+      }
+    ).then(function(res){
+      if(res.status == 200) {
+        alert('저장에 성공했습니다')
+        dial1.close()
+        grid2.clear()
+        grid3.clear()
+        searchProgram()
+      } else {
+        throw new Error('프로그램 저장 실패')
+      }
+    })
+    .catch((error) => console.log(error))
+  }
+
+  function saveAction(){
+    const param = {
+      ACTION_ID: $('#actionId').val(),
+      URL: $('#actionUrl').val(),
+      DESCRIPTION: $('#actionDesc').val(),
+      PGR_ID: $('#actionPgrId').val(),
+      AUTH_LEVEL: $('#actionAuthLv').val(),
+      saveType: $('#actionSaveType').val(),
+    }
+
+    console.log(param)
+
+    fetch('/system/action/save',
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(param),
+      }
+    ).then(function(res){
+      if(res.status == 200) {
+        alert('저장에 성공했습니다')
+        dial2.close()
+        grid3.clear()
+        searchAction($('#actionPgrId').val())
+      } else {
+        throw new Error('액션 저장 실패')
+      }
+    })
+    .catch((error) => console.log(error))
+  }
+
+  function toggleAuth(ACTION_ID, AUTH_NAME, toggleType){
+    const param = {
+      ACTION_ID,
+      AUTH_NAME,
+      toggleType
+    }
+
+    fetch('/system/action/auth/save',
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(param),
+      }
+    ).then(function(res){
+      if(res.status == 200) {
+        console.log("권한 저장 성공")
+      } else {
+        throw new Error('권한 저장 실패')
+      }
+    })
+    .catch((error) => console.log(error))
+  }
+
+  function showProgramDial(selectProgram) {
+    $('#pgrSaveType').val('insert')
+
+    let PGR_ID = null
+    let PGR_NAME = null
+    let DEVICE = null
+
+    if(selectProgram){
+      PGR_ID = selectProgram.PGR_ID
+      PGR_NAME = selectProgram.PGR_NAME
+      DEVICE = selectProgram.DEVICE
+      $('#pgrSaveType').val('update')
+      $(`[name=dialDevice][value=${DEVICE}]`).prop('checked', true)
+    }
+
+    $('#pgrName').val(PGR_NAME || '')
+    $('#pgrId').val(PGR_ID || '')
+    dial1.showModal()
+  }
+
+  function showActionDial(selectAction) {
+    $('#actionSaveType').val('insert')
+
+    let URL = null
+    let DESCRIPTION = null
+    let AUTH_LEVEL = null
+    let ACTION_ID = null
+
+    if(selectAction){
+      URL = selectAction.URL
+      DESCRIPTION = selectAction.DESCRIPTION
+      AUTH_LEVEL = selectAction.AUTH_LEVEL
+      ACTION_ID = selectAction.ACTION_ID
+      $('#actionSaveType').val('update')
+    }
+
+    $('#actionUrl').val(URL || '')
+    $('#actionDesc').val(DESCRIPTION || '')
+    $('#actionAuthLv').val(AUTH_LEVEL || 0)
+    $('#actionId').val(ACTION_ID || '')
+    dial2.showModal()
+  }
+
+</script>
+</body>
+
+</html>

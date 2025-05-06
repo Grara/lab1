@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<template th:replace="~{/fragments/head-fragment :: head}"></template>
+<style>
+  input:invalid {
+    border-color: red;
+  }
+</style>
+<body>
+<template th:replace="~{/fragments/header-fragment :: header}"></template>
+<template th:replace="~{/fragments/sidemenu-fragment :: sidemenu}"></template>
+<aside class="side-pc left" style="border: 4px dotted red;">
+</aside>
+<main id="main" style="text-align:center; border: 4px dotted green;">
+  <form id="form1">
+    <span>내용1</span>
+    <input type="text" name="con1" required/>
+    <span>내용2</span>
+    <input type="text" name="con2" required/>
+    <input name="uploadImg" type="file" accept="image/*"/>
+    <button type="button" id="upload"></button>
+  </form>
+</main>
+<aside class="side-pc right" style="border: 4px dotted purple;">
+</aside>
+<footer style="border: 4px dotted yellow; height:20rem">
+</footer>
+<script>
+  window.onload = function(){
+    $('#upload').on('click', function(){
+      upload()
+    })
+
+    function upload(){
+      const formEl = document.getElementById("form1")
+      const param = new FormData(formEl)
+      param.append('abc', 'abc')
+      console.log(param.has('sddd'))
+
+      fetch('/upload/process',
+        {
+          method: "POST",
+          body: param,
+        }
+      ).then(function(res){
+        if(res.status == 200) {
+          console.log('성공')
+        } else {
+          throw new Error('업로드 실패')
+        }
+      })
+      .catch((error) => console.log(error))
+    }
+  }
+</script>
+</body>
