@@ -13,7 +13,9 @@
               <details th:unless="${m2.children.size() == 0}">
                 <summary>[[${m2.name}]]</summary>
                 <ul>
-                  <li th:each="${m3 : ${m2.children}}"><a th:href="${m3.url}">[[${m3.name}]]</a></li>
+                  <li th:each="${m3 : ${m2.children}}">
+                    <a th:href="${m3.url}">[[${m3.name}]]</a>
+                  </li>
                 </ul>
               </details>
             </li>
