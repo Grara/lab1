@@ -1,13 +1,16 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 
-<template th:replace="~{/fragments/head-fragment :: head}"></template>
-<body>
-    <template th:replace="~{/fragments/header-fragment :: header}"></template>
-    <template th:replace="~{/fragments/sidemenu-fragment :: sidemenu}"></template>
-    <aside class="side-pc left" style="border: 4px dotted red;">
-    </aside>
+<template th:replace="~{fragments/head-fragment :: head}"></template>
+<body th:with="a='abc'">
+    <template th:replace="~{fragments/header-fragment :: header}"></template>
+    <template th:replace="~{fragments/sidemenu-fragment :: sidemenu}"></template>
+    <aside class="side-pc left" style="border: 4px dotted red;" >
+        [[${a}]]
+    </aside >
     <main id="main" style="text-align:center; border: 4px dotted green;">
+        <th:block th:utext="${@customFn.apply('내용', '<br>')}"></th:block>
+        <a href="/login">로그인</a>
     </main>
     <aside class="side-pc right" style="border: 4px dotted purple;">
     </aside>
@@ -16,7 +19,7 @@
     </footer>
 <script>
 window.onload = function(){
-  console.log($('.main'))
+  console.log('[[${session}]]')
 }
 </script>
 </body>

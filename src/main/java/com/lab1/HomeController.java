@@ -32,6 +32,9 @@ public class HomeController {
     @Autowired
     private FileService fileService;
 
+    @Autowired
+    private HttpServletRequest request;
+
     @GetMapping("/")
     public String home(Model model) throws Exception{
         log.debug(Boolean.toString(Thread.currentThread().isVirtual()));
@@ -39,7 +42,12 @@ public class HomeController {
     }
 
     @GetMapping("/login")
-    public String loginPage(){
+    public String loginPage(HttpServletRequest req, @RequestParam Map<String, Object>param){
+        RequestWrapper req1 = (RequestWrapper) req;
+        System.out.println(request.getParameter("dd"));
+        System.out.println(param.get("aa"));
+        System.out.println(param.get("dd"));
+
         return "pages/login";
     }
 

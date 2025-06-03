@@ -1,5 +1,6 @@
 package com.lab1;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
@@ -20,10 +21,20 @@ public class SystemController {
     @Autowired
     private TestService ss;
 
+    @Autowired
+    private HttpServletRequest request;
+
+    @Autowired
+    private HomeController hc;
+
     @GetMapping("/system/menu")
     public String menuPage(Model model){
         //ss.testQQ();
-
+        RequestWrapper wrapper = new RequestWrapper(request);
+        wrapper.setParameter("dd", "dd");
+        System.out.println(wrapper.getParameter("dd"));
+        System.out.println(request.getClass());
+        //hc.loginPage();
         return "pages/menuManage";
     }
 
